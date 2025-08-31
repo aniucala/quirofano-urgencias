@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servicio de Quirófano de Urgencias</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f0f8f5; color: #333; }
+    header { background: linear-gradient(to right, #2b7a78, #3aafa9); padding: 20px; text-align: center; }
+    header img { max-height: 120px; border-radius: 12px; }
+    nav { background: #17252a; color: white; padding: 10px; display: flex; justify-content: center; gap: 20px; }
+    nav a { color: white; text-decoration: none; font-weight: bold; }
+    section { padding: 20px; background: #ffffff; margin: 20px; border-radius: 10px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); }
+    h2 { color: #2b7a78; }
+    .admin-panel { display: none; margin-top: 10px; }
+    textarea { width: 100%; }
+    .button { display: inline-block; padding: 10px 20px; background: #3aafa9; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; }
+    .button:hover { background: #2b7a78; }
+    footer { text-align: center; background: #17252a; color: white; padding: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://i.imgur.com/8MhYnWO.jpeg" alt="Icono Quirófano">
+    <h1>Servicio de Quirófano de Urgencias</h1>
+  </header>
+
+  <nav>
+    <a href="#protocolos">Protocolos</a>
+    <a href="#tareas">Tareas</a>
+    <a href="#avisos">Avisos</a>
+    <a href="#noticias">Noticias</a>
+    <a href="#juego">Juego</a>
+  </nav>
+
+  <!-- LOGIN -->
+  <section id="login">
+    <h2>Acceso Administradores</h2>
+    <input type="email" id="email" placeholder="Correo"><br>
+    <input type="password" id="password" placeholder="Contraseña"><br><br>
+    <button onclick="login()">Entrar</button>
+    <button onclick="logout()">Salir</button>
+  </section>
+
+  <!-- CONTENIDO -->
+  <section id="protocolos">
+    <h2>Protocolos</h2>
+    <div id="protocolos-content">Cargando...</div>
+    <div class="admin-panel">
+      <textarea id="protocolos-input" rows="5"></textarea><br>
+      <button onclick="guardarContenido('protocolos')">Guardar</button>
+    </div>
+  </section>
+
+  <section id="tareas">
+    <h2>Tablas de Tareas</h2>
+    <div id="tareas-content">Cargando...</div>
+    <div class="admin-panel">
+      <textarea id="tareas-input" rows="5"></textarea><br>
+      <button onclick="guardarContenido('tareas')">Guardar</button>
+    </div>
+  </section>
+
+  <section id="avisos">
+    <h2>Avisos</h2>
+    <div id="avisos-content">Cargando...</div>
+    <div class="admin-panel">
+      <textarea id="avisos-input" rows="5"></textarea><br>
+      <button onclick="guardarContenido('avisos')">Guardar</button>
+    </div>
+  </section>
+
+  <section id="noticias">
+    <h2>Noticias</h2>
+    <div id="noticias-content">Cargando...</div>
+    <div class="admin-panel">
+      <textarea id="noticias-input" rows="5"></textarea><br>
+      <button onclick="guardarContenido('noticias')">Guardar</button>
+    </div>
+  </section>
+
+  <section id="juego">
+    <h2>Juego Educativo</h2>
+    <a href="file:///C:/Users/Usuario/Desktop/crear_juego.bat/imagenes%20del%20juego/!!!!!Scalpel%20Sister%C2%A1%C2%A1%C2%A1.html" 
+       class="button" target="_blank">Jugar a Scalpel Sister</a>
+  </section>
+
+  <footer>
+    © 2025 Servicio de Quirófano de Urgencias
+  </footer>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+  <script>
+    // 🔧 Pegar aquí tus credenciales de Firebase
+    const firebaseConfig = {
+  apiKey: "AIzaSyAKv0zIfsyMZYWh1HDLc5EFOOfEH_Ws_oY",
+  authDomain: "quirofano--urg-hgua--dr-balmis.firebaseapp.com",
+  projectId: "quirofano--urg-hgua--dr-balmis",
+  storageBucket: "quirofano--urg-hgua--dr-balmis.firebasestorage.app",
+  messagingSenderId: "453701623512",
+  appId: "1:453701623512:web:8e6b7327d747b2fe2f41ad",
+  measurementId: "G-G753SDXK67"
+};
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ADMIN CORREOS AUTORIZADOS
+    const admins = ["admin1@hospital.com","admin2@hospital.com","admin3@hospital.com"];
+
+    // LOGIN
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => alert("Acceso correcto"))
+        .catch(err => alert("Error: " + err.message));
+    }
+    function logout() {
+      auth.signOut();
+      alert("Sesión cerrada");
+    }
+
+    // Mostrar contenido en tiempo real
+    ["protocolos","tareas","avisos","noticias"].forEach(sec => {
+      db.collection("contenido").doc(sec).onSnapshot(doc => {
+        if (doc.exists) {
+          document.getElementById(sec+"-content").innerHTML = doc.data().texto;
+        }
+      });
+    });
+
+    // Guardar contenido
+    function guardarContenido(seccion) {
+      const input = document.getElementById(seccion+"-input").value;
+      db.collection("contenido").doc(seccion).set({texto: input});
+    }
+
+    // Mostrar editor solo si es admin
+    auth.onAuthStateChanged(user => {
+      if (user && admins.includes(user.email)) {
+        document.querySelectorAll(".admin-panel").forEach(el => el.style.display = "block");
+      } else {
+        document.querySelectorAll(".admin-panel").forEach(el => el.style.display = "none");
+      }
+    });
+  </script>
+</body>
+</html>
